@@ -107,10 +107,10 @@ public:
 		SetLineColor((Color)RGB(r, g, b));
 	}
 
-	virtual void SetLineColor(Color color) override
+	virtual void SetLineColor(const Color &color) override
 	{
 		if (!hwnd) return;
-		int rgb = (int)color;
+		int rgb = color.ToRGB();
 
 		SelectObject(ps.hdc, GetStockObject(DC_PEN));
 		SetDCPenColor(ps.hdc, rgb);
@@ -121,21 +121,21 @@ public:
 		SetFillColor((Color)RGB(r, g, b));
 	}
 
-	virtual void SetFillColor(Color color) override
+	virtual void SetFillColor(const Color &color) override
 	{
 		if (!hwnd) return;
-		int rgb = (int)color;
+		int rgb = color.ToRGB();
 
 		SelectObject(ps.hdc, GetStockObject(DC_BRUSH));
 		SetDCBrushColor(ps.hdc, rgb);
 	}
 
-	virtual void SetColor(int r, int g, int b)
+	virtual void SetColor(int r, int g, int b) override
 	{
 		SetColor((Color)RGB(r, g, b));
 	}
 		
-	virtual void SetColor(Color color)
+	virtual void SetColor(const Color &color) override
 	{
 		SetLineColor(color);
 		SetFillColor(color);
@@ -380,10 +380,10 @@ public:
 		LeaveCriticalSection(&cs);
 	}
 
-	virtual void SetBackgroundColor(Color color) override
+	virtual void SetBackgroundColor(const Color &color) override
 	{
 		EnterCriticalSection(&cs);
-		bgcolor = (int)color;
+		bgcolor = color.ToRGB();
 		LeaveCriticalSection(&cs);
 	}
 

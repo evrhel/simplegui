@@ -128,38 +128,57 @@ namespace simplegui
 	};
 
 	//! \brief A color
-	enum class Color
+	struct Color
 	{
-		BLACK = 0x000000,
-		DARK_GRAY = 0x404040,
-		GRAY = 0x808080,
-		LIGHT_GRAY = 0xbfbfbf,
-		WHITE = 0xffffff,
+		static constexpr int BLACK = 0x000000;
+		static constexpr int DARK_GRAY = 0x404040;
+		static constexpr int GRAY = 0x808080;
+		static constexpr int LIGHT_GRAY = 0xbfbfbf;
+		static constexpr int WHITE = 0xffffff;
 
-		DARK_RED = 0x000080,
-		RED = 0x0000ff,
-		LIGHT_RED = 0x80ffff,
+		static constexpr int DARK_RED = 0x000080;
+		static constexpr int RED = 0x0000ff;
+		static constexpr int LIGHT_RED = 0x80ffff;
 
-		DARK_GREEN = 0x008000,
-		GREEN = 0x00ff00,
-		LIGHT_GREEN = 0x80ff80,
+		static constexpr int DARK_GREEN = 0x008000;
+		static constexpr int GREEN = 0x00ff00;
+		static constexpr int LIGHT_GREEN = 0x80ff80;
 
-		DARK_BLUE = 0x800000,
-		BLUE = 0xff0000,
-		LIGHT_BLUE = 0xff8080,
+		static constexpr int DARK_BLUE = 0x800000;
+		static constexpr int BLUE = 0xff0000;
+		static constexpr int LIGHT_BLUE = 0xff8080;
 
-		DARK_YELLOW = 0x008080,
-		YELLOW = 0x00ffff,
-		LIGHT_YELLOW = 0x80ffff,
+		static constexpr int DARK_YELLOW = 0x008080;
+		static constexpr int YELLOW = 0x00ffff;
+		static constexpr int LIGHT_YELLOW = 0x80ffff;
 
-		DARK_MAGENTA = 0x800080,
-		MAGENTA = 0xff00ff,
-		LIGHT_MAGENTA = 0xff80ff,
+		static constexpr int DARK_MAGENTA = 0x800080;
+		static constexpr int MAGENTA = 0xff00ff;
+		static constexpr int LIGHT_MAGENTA = 0xff80ff;
 
-		DARK_AQUA = 0x808000,
-		AQUA = 0xffff00,
-		LIGHT_AQUA = 0xffff80
+		static constexpr int DARK_AQUA = 0x808000;
+		static constexpr int AQUA = 0xffff00;
+		static constexpr int LIGHT_AQUA = 0xffff80;
+
+		char a, r, g, b;
+
+		constexpr Color() :
+			Color(0, 0, 0) { }
+		constexpr Color(int r, int g, int b) :
+			Color(r, g, b, 0) { }
+		constexpr Color(int r, int g, int b, int a) :
+			a(a), r(r), g(g), b(b) { }
+		constexpr Color(int abgr) :
+			Color() { (int &)a = abgr; }
+
+		constexpr int ToRGBA() const { return (int &)a; }
+		constexpr int ToRGB() const { return ToRGBA() & 0x00ffffff; }
 	};
+
+	constexpr bool operator==(const Color &a, const Color &b)
+	{
+		return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+	}
 
 	//! \brief A graphics context.
 	class Graphics
@@ -230,7 +249,7 @@ namespace simplegui
 		//! \brief Set the line color
 		//! 
 		//! \param [in] color The color.
-		virtual void SetLineColor(Color color) = 0;
+		virtual void SetLineColor(const Color &color) = 0;
 
 		//! \brief Set the fill color.
 		//!
@@ -242,7 +261,7 @@ namespace simplegui
 		//! \brief Set the fill color
 		//! 
 		//! \param [in] color The color.
-		virtual void SetFillColor(Color color) = 0;
+		virtual void SetFillColor(const Color &color) = 0;
 
 		//! \brief Set the line and fill color.
 		//!
@@ -254,7 +273,7 @@ namespace simplegui
 		//! \brief Set the line and fill color.
 		//!
 		//! \param [in] color The color.
-		virtual void SetColor(Color color) = 0;
+		virtual void SetColor(const Color &color) = 0;
 
 		//! \brief Clear the space.
 		virtual void Clear() = 0;
@@ -312,7 +331,7 @@ namespace simplegui
 		//! \brief Set the background color.
 		//! 
 		//! \param [in] color The color.
-		virtual void SetBackgroundColor(Color color) = 0;
+		virtual void SetBackgroundColor(const Color &color) = 0;
 
 		//! \brief Paint the window and wait for it to finish.
 		virtual void PaintAndWait() = 0;
