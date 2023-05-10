@@ -107,13 +107,11 @@ public:
 		SetLineColor((Color)RGB(r, g, b));
 	}
 
-	virtual void SetLineColor(const Color &color) override
+	virtual void SetLineColor(Color color) override
 	{
 		if (!hwnd) return;
-		int rgb = color.ToRGB();
-
 		SelectObject(ps.hdc, GetStockObject(DC_PEN));
-		SetDCPenColor(ps.hdc, rgb);
+		SetDCPenColor(ps.hdc, color.abgr);
 	}
 
 	virtual void SetFillColor(int r, int g, int b) override
@@ -121,21 +119,19 @@ public:
 		SetFillColor((Color)RGB(r, g, b));
 	}
 
-	virtual void SetFillColor(const Color &color) override
+	virtual void SetFillColor(Color color) override
 	{
 		if (!hwnd) return;
-		int rgb = color.ToRGB();
-
 		SelectObject(ps.hdc, GetStockObject(DC_BRUSH));
-		SetDCBrushColor(ps.hdc, rgb);
+		SetDCBrushColor(ps.hdc, color.abgr);
 	}
 
 	virtual void SetColor(int r, int g, int b) override
 	{
-		SetColor((Color)RGB(r, g, b));
+		SetColor(Color(r, g, b));
 	}
 		
-	virtual void SetColor(const Color &color) override
+	virtual void SetColor(Color color) override
 	{
 		SetLineColor(color);
 		SetFillColor(color);
@@ -182,6 +178,7 @@ public:
 		wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
 		RegisterClassA(&wc);
 
+		HWND parent = win->parent ? win->parent->hwnd : NULL;
 		win->hwnd = CreateWindowExA(
 			0,
 			"Window",
@@ -189,7 +186,7 @@ public:
 			WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT,
-			NULL,
+			parent,
 			NULL,
 			NULL,
 			win);
@@ -213,7 +210,7 @@ public:
 		while ((bRet = GetMessageA(&msg, NULL, 0, 0)) != 0)
 		{
 			if (bRet == -1)
-				MessageBoxA(NULL, "Error", "Error", MB_ICONERROR);
+				MessageBoxA(win->hwnd, "Win32Window::EventLoop(): Unresolved Error", "Error", MB_ICONERROR);
 
 			TranslateMessage(&msg);
 			DispatchMessageA(&msg);
@@ -227,6 +224,7 @@ public:
 	//! \return 0
 	static DWORD CALLBACK WindowWorker(Win32Window *win)
 	{
+
 		HWND hwnd;
 
 		hwnd = SetupWindow(win);
@@ -247,11 +245,42 @@ public:
 	WindowListener *wl;
 	Painter *p;
 
-	Win32Window(int width, int height, const char *title) :
+	Win32Window *parent;
+
+	static constexpr int nKeys = 256;
+	bool keys[nKeys];
+
+	static constexpr int nMbuttons = 16;
+	bool mbuttons[nMbuttons];
+
+	bool painting;
+
+	int ModifierKeys()
+	{
+		int mods = 0;
+
+		if (keys[KEY_LSHIFT]) mods |= MOD_LSHIFT;
+		if (keys[KEY_RSHIFT]) mods |= MOD_RSHIFT;
+
+		if (keys[KEY_LMENU]) mods |= MOD_LALT;
+		if (keys[KEY_RMENU]) mods |= MOD_RALT;
+
+		if (keys[KEY_LWIN]) mods |= MOD_LWIN;
+		if (keys[KEY_RWIN]) mods |= MOD_RWIN;
+		
+		return mods;
+	}
+
+	Win32Window(int width, int height, const char *title, Win32Window *parent) :
 		hwnd(NULL), hThread(NULL),
 		kl(0), ml(0), wl(0), p(0),
-		bgcolor(RGB(200, 200, 200))
+		bgcolor(RGB(200, 200, 200)),
+		painting(false), parent(parent)
 	{
+		/* keys and mouse buttons not pressed initially */
+		ZeroMemory(keys, sizeof(keys));
+		ZeroMemory(mbuttons, sizeof(mbuttons));
+
 		/* create synchronization primitives */
 		InitializeCriticalSection(&cs);
 		InitializeConditionVariable(&cv);
@@ -380,15 +409,11 @@ public:
 		LeaveCriticalSection(&cs);
 	}
 
-	virtual void SetBackgroundColor(const Color &color) override
+	virtual void SetBackgroundColor(Color color) override
 	{
 		EnterCriticalSection(&cs);
-		bgcolor = color.ToRGB();
+		bgcolor = color.abgr;
 		LeaveCriticalSection(&cs);
-	}
-
-	virtual void PaintAndWait() override
-	{
 	}
 
 	virtual void Paint() override
@@ -457,26 +482,108 @@ public:
 
 	virtual bool IsDisposed() override
 	{
-		bool result;
 		EnterCriticalSection(&cs);
-		result = !hwnd;
+		bool result = !hwnd;
 		LeaveCriticalSection(&cs);
 		return result;
 	}
 
-	virtual void SetKeyListener(KeyListener *kl) override { this->kl = kl; }
-	virtual void SetMouseListener(MouseListener *ml) override { this->ml = ml; }
-	virtual void SetWindowListener(WindowListener *wl) override { this->wl = wl; }
-	virtual void SetPainter(Painter *p) override { this->p = p; }
+	virtual void SetKeyListener(KeyListener *kl) override
+	{
+		EnterCriticalSection(&cs);
+		this->kl = kl;
+		LeaveCriticalSection(&cs);
+	}
+
+	virtual void SetMouseListener(MouseListener *ml) override
+	{
+		EnterCriticalSection(&cs);
+		this->ml = ml;
+		LeaveCriticalSection(&cs);
+	}
+
+	virtual void SetWindowListener(WindowListener *wl) override
+	{
+		EnterCriticalSection(&cs);
+		this->wl = wl;
+		LeaveCriticalSection(&cs);
+	}
+
+	virtual void SetPainter(Painter *p) override
+	{
+		EnterCriticalSection(&cs);
+		this->p = p;
+		LeaveCriticalSection(&cs);
+	}
+
+	virtual bool GetAsyncKey(int vk) override
+	{
+		EnterCriticalSection(&cs);
+		bool r = false;
+		if (vk >= 0 && vk < nKeys)
+			r = keys[vk];
+		LeaveCriticalSection(&cs);
+		return r;
+	}
+
+	virtual void GetAsyncKeys(const int *vks, bool *const states, int count) override
+	{
+		EnterCriticalSection(&cs);
+		for (int i = 0; i < count; i++)
+		{
+			int vk = vks[i];
+			if (vk < 1 || vk > nKeys)
+				continue;
+			states[i] = keys[vk];
+		}
+		LeaveCriticalSection(&cs);
+	}
+
+	virtual bool GetAsyncMouseButton(int mb) override
+	{
+		EnterCriticalSection(&cs);
+		bool r = false;
+		if (mb >= 1 && mb <= nMbuttons)
+			r = mbuttons[mb - 1];
+		LeaveCriticalSection(&cs);
+		return r;
+	}
+
+	virtual void GetAsyncMouseButtons(const int *mbs, bool *const states, int count) override
+	{
+		EnterCriticalSection(&cs);
+		for (int i = 0; i < count; i++)
+		{
+			int mb = mbs[i];
+			if (mb < 1 || mb > nMbuttons)
+				continue;
+			states[i] = mbuttons[mb - 1];
+		}
+		LeaveCriticalSection(&cs);
+	}
+
+	virtual void GetAsyncMousePosition(int *const x, int *const y) override
+	{
+		POINT pPos;
+		GetCursorPos(&pPos);
+		ScreenToClient(hwnd, &pPos);
+		if (*x) *x = pPos.x;
+		if (*y) *y = pPos.y;
+	}
+
+	virtual Window *CreateChild(int width, int height, const char *title) override
+	{
+		return new Win32Window(width, height, title, this);
+	}
 };
+
+Window *simplegui::Window::Create(int width, int height, const char *title)
+{
+	return new Win32Window(width, height, title, nullptr);
+}
 
 simplegui::Window::Window() { }
 simplegui::Window::~Window() { }
-
-SIMPLEGUI_API Window *simplegui::NewWindow(int width, int height, const char *title)
-{
-	return new Win32Window(width, height, title);
-}
 
 static LRESULT CALLBACK WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
@@ -529,19 +636,24 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lP
 		return 0;
 
 	/* keyboard events */
-
-	case WM_KEYDOWN: // key pressed
-		if (win->kl)
-			win->kl->KeyDown(win, wParam);
+	case WM_KEYDOWN: { // key pressed
+		bool old = win->keys[wParam];
+		win->keys[wParam] = true;
+		if (!old && win->kl)
+			win->kl->KeyDown(win, (int)wParam);
 		return 0;
+	}
 	case WM_CHAR: // key typed
 		if (win->kl)
-			win->kl->KeyTyped(win, wParam);
+			win->kl->KeyTyped(win, (unsigned int)wParam);
 		return 0;
-	case WM_KEYUP: // key released
-		if (win->kl)
-			win->kl->KeyUp(win, lParam);
+	case WM_KEYUP: {// key released
+		bool old = win->keys[wParam];
+		win->keys[wParam] = false;
+		if (old && win->kl)
+			win->kl->KeyUp(win, (int)wParam);
 		return 0;
+	}
 	
 	/* ignore system keys */
 	case WM_SYSKEYDOWN:
@@ -562,10 +674,11 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lP
 	case WM_MBUTTONDOWN:
 		evt.button = 3;
 	mb_down_generic:
+		win->mbuttons[evt.button - 1] = true;
 		if (win->ml)
 		{
 			evt.count = 0;
-			evt.mod = 0;
+			evt.mod = win->ModifierKeys();
 			evt.x = GET_X_LPARAM(lParam);
 			evt.y = GET_Y_LPARAM(lParam);
 			win->ml->MouseDown(win, evt);
@@ -582,6 +695,7 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lP
 	case WM_MBUTTONUP:
 		evt.button = 3;
 	mb_up_generic:
+		win->mbuttons[evt.button - 1] = false;
 		if (win->ml)
 		{
 			evt.count = 0;
@@ -596,6 +710,7 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lP
 		{
 			evt.count = 0;
 			evt.mod = 0;
+			evt.mod = win->ModifierKeys();
 			evt.x = GET_X_LPARAM(lParam);
 			evt.y = GET_Y_LPARAM(lParam);
 			win->ml->MouseScroll(win, WHEEL_DELTA * GET_WHEEL_DELTA_WPARAM(wParam));

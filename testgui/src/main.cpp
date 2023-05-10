@@ -1,11 +1,13 @@
 #include <simplegui.h>
 
 #include <cmath>
+#include <string>
 #include <Windows.h>
 
 using namespace simplegui;
 int offset;
 int lastX = 0, lastY = 0;
+std::string text;
 
 class MyPainter : public Painter
 {
@@ -15,6 +17,10 @@ public:
 		g->Clear();
 
 		g->DrawString(100, 100, "Hello World!");
+
+		g->SetColor(Color::BLACK);
+		g->FillRect(100, 216, 300, 2);
+		g->DrawString(100, 200, text.c_str());
 		
 		g->SetFillColor(Color::GREEN);
 		g->SetLineColor(Color::DARK_GREEN);
@@ -30,7 +36,7 @@ public:
 	}
 };
 
-class MyListener : public MouseListener
+class MyMouseListener : public MouseListener
 {
 public:
 	virtual void MouseDown(Window *win, MouseEvent evt) override
@@ -43,19 +49,51 @@ public:
 	}
 };
 
+class MyKeyListener : public KeyListener
+{
+public:
+	virtual void KeyDown(Window *win, int vk) override
+	{
+		if (vk == KEY_ESCAPE)
+			win->Dispose();
+	}
+
+	virtual void KeyTyped(Window *win, unsigned int scancode) override
+	{
+		switch (scancode)
+		{
+		case KEY_BACKSPACE:
+			if (text.length())
+				text = text.substr(0, text.length() - 1);
+			break;
+		case KEY_RETURN:
+			text.push_back('\n');
+			break;
+		case KEY_TAB:
+			text.append("   ");
+			break;
+		default:
+			text.push_back(scancode);
+			break;
+		}
+	}
+};
+
 int main(int argc, char *argv[])
 {
 	MyPainter painter;
-	MyListener listener;
+	MyMouseListener mListener;
+	MyKeyListener kListener;
 
-	Window *window = NewWindow(800, 600, "Hello Window!"); // create the window
+	Window *window = Window::Create(800, 600, "Hello Window!"); // create the window
 	window->SetPainter(&painter); // set the painter
-	window->SetMouseListener(&listener);
+	window->SetMouseListener(&mListener);
+	window->SetKeyListener(&kListener);
 	window->Show(true); // show the window
 
 	while (!window->IsDisposed())
 	{
-		double time = GetTickCount64();
+		double time = (double)GetTickCount64();
 		offset = (int)(sin(time / 1000.0) * 50);
 
 		Sleep(20);
