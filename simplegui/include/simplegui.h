@@ -132,39 +132,53 @@ namespace simplegui
 	//! \brief Stores a 32-bit ABGR color.
 	struct Color
 	{
-		static constexpr int BLACK = 0x000000;
-		static constexpr int DARK_GRAY = 0x404040;
-		static constexpr int GRAY = 0x808080;
-		static constexpr int LIGHT_GRAY = 0xbfbfbf;
-		static constexpr int WHITE = 0xffffff;
+		static constexpr uint32_t BLACK = 0x000000;
+		static constexpr uint32_t DARK_GRAY = 0x404040;
+		static constexpr uint32_t GRAY = 0x808080;
+		static constexpr uint32_t LIGHT_GRAY = 0xbfbfbf;
+		static constexpr uint32_t WHITE = 0xffffff;
 
-		static constexpr int DARK_RED = 0x800000;
-		static constexpr int RED = 0xff0000;
-		static constexpr int LIGHT_RED = 0xffff80;
+		static constexpr uint32_t DARK_RED = 0x800000;
+		static constexpr uint32_t RED = 0xff0000;
+		static constexpr uint32_t LIGHT_RED = 0xffff80;
 
-		static constexpr int DARK_GREEN = 0x008000;
-		static constexpr int GREEN = 0x00ff00;
-		static constexpr int LIGHT_GREEN = 0x80ff80;
+		static constexpr uint32_t DARK_GREEN = 0x008000;
+		static constexpr uint32_t GREEN = 0x00ff00;
+		static constexpr uint32_t LIGHT_GREEN = 0x80ff80;
 
-		static constexpr int DARK_BLUE = 0x000080;
-		static constexpr int BLUE = 0x0000ff;
-		static constexpr int LIGHT_BLUE = 0x8080ff;
+		static constexpr uint32_t DARK_BLUE = 0x000080;
+		static constexpr uint32_t BLUE = 0x0000ff;
+		static constexpr uint32_t LIGHT_BLUE = 0x8080ff;
 
-		static constexpr int DARK_YELLOW = 0x808000;
-		static constexpr int YELLOW = 0xffff00;
-		static constexpr int LIGHT_YELLOW = 0xffff80;
+		static constexpr uint32_t DARK_YELLOW = 0x808000;
+		static constexpr uint32_t YELLOW = 0xffff00;
+		static constexpr uint32_t LIGHT_YELLOW = 0xffff80;
 
-		static constexpr int DARK_MAGENTA = 0x800080;
-		static constexpr int MAGENTA = 0xff00ff;
-		static constexpr int LIGHT_MAGENTA = 0xff80ff;
+		static constexpr uint32_t DARK_MAGENTA = 0x800080;
+		static constexpr uint32_t MAGENTA = 0xff00ff;
+		static constexpr uint32_t LIGHT_MAGENTA = 0xff80ff;
 
-		static constexpr int DARK_AQUA = 0x008080;
-		static constexpr int AQUA = 0x00ffff;
-		static constexpr int LIGHT_AQUA = 0x80ffff;
+		static constexpr uint32_t DARK_AQUA = 0x008080;
+		static constexpr uint32_t AQUA = 0x00ffff;
+		static constexpr uint32_t LIGHT_AQUA = 0x80ffff;
 
+		//! \brief Create a grayscale color. A gray color is defined in that
+		//! its R, G, and B fields are all the same.
+		//! 
+		//! \param [in] amount Amount of grayscale [0, 255].
+		//! \param [in,opt] alpha Alpha of color. Default 0.
+		//! 
+		//! \return Returns a grayscale color with the given amount
+		//! and alpha.
+		static constexpr Color Gray(int amount, int alpha = 0)
+		{
+			return Color(amount, amount, amount, alpha);
+		}
+
+		// computer is little endian, so order is flipped
 		union
 		{
-			struct { uint8_t a, b, g, r; }; // color components
+			struct { uint8_t r, g, b, a; }; // color components
 			uint32_t abgr; // ABGR
 		};
 

@@ -104,7 +104,7 @@ public:
 
 	virtual void SetLineColor(int r, int g, int b) override
 	{
-		SetLineColor((Color)RGB(r, g, b));
+		SetLineColor(Color(r, g, b));
 	}
 
 	virtual void SetLineColor(Color color) override
@@ -116,7 +116,7 @@ public:
 
 	virtual void SetFillColor(int r, int g, int b) override
 	{
-		SetFillColor((Color)RGB(r, g, b));
+		SetFillColor(Color(r, g, b));
 	}
 
 	virtual void SetFillColor(Color color) override
