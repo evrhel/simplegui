@@ -16,6 +16,12 @@ public:
 	{
 		g->Clear();
 
+		g->SetColor(Color(255, 0, 0));
+		g->FillRect(100, 100, 200, 200);
+
+
+
+
 		g->DrawString(100, 100, "Hello World!");
 
 		g->SetColor(Color::BLACK);

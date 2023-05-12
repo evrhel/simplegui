@@ -166,7 +166,7 @@ namespace simplegui
 		//! its R, G, and B fields are all the same.
 		//! 
 		//! \param [in] amount Amount of grayscale [0, 255].
-		//! \param [in,opt] alpha Alpha of color. Default 0.
+		//! \param [in] alpha Alpha of color. Default is 0.
 		//! 
 		//! \return Returns a grayscale color with the given amount
 		//! and alpha.
@@ -379,7 +379,7 @@ namespace simplegui
 		//! 
 		//! \param [in] width The width of the window.
 		//! \param [in] height The height of the window.
-		//! \param [in,opt] title The title of the window.
+		//! \param [in] title The title of the window. Optional.
 		//! 
 		//! \return The window.
 		static Window *Create(int width, int height, const char *title);
@@ -401,14 +401,14 @@ namespace simplegui
 
 		//! \brief Get the size of the window.
 		//! 
-		//! \param [out,opt] w The width of the window.
-		//! \param [out,opt] h The height of the window.
+		//! \param [out] w The width of the window. Optional.
+		//! \param [out] h The height of the window. Optional
 		virtual void GetSize(int *const w, int *const h) = 0;
 
 		//! \brief Get the position of the window.
 		//! 
-		//! \param [out,opt] x The x position of the window.
-		//! \param [out,opt] y The y position of the window.
+		//! \param [out] x The x position of the window. Optional.
+		//! \param [out] y The y position of the window. Optional.
 		virtual void GetPos(int *const x, int *const y) = 0;
 
 		//! \brief Set the title.
@@ -461,22 +461,26 @@ namespace simplegui
 
 		//! \brief Set or remove the key listener.
 		//! 
-		//! \param [in,opt] kl The key listener. The window does not own this.
+		//! \param [in] kl The key listener. The window does not own this. Null
+		//! removes the current listener.
 		virtual void SetKeyListener(KeyListener *kl) = 0;
 
 		//! \brief Set or remove the mouse listener.
 		//! 
-		//! \param [in,opt] ml The mouse listener. The window does not own this.
+		//! \param [in] ml The mouse listener. The window does not own this. Null
+		//! removes the current listener.
 		virtual void SetMouseListener(MouseListener *ml) = 0;
 
 		//! \brief Set or remove the window listener.
 		//! 
-		//! \param [in,opt] wl The window listener. The window does not own this.
+		//! \param [in] wl The window listener. The window does not own this. Null
+		//! removes the current listener.
 		virtual void SetWindowListener(WindowListener *wl) = 0;
 
 		//! \brief Set or remove the window's painter.
 		//! 
-		//! \param [in,opt] p The new painter. The window does not own this.
+		//! \param [in] p The new painter. The window does not own this. Null
+		//! removes the current listener.
 		virtual void SetPainter(Painter *p) = 0;
 
 		//! \brief Get the state of a key in this window.
@@ -515,15 +519,15 @@ namespace simplegui
 
 		//! \brief Get the position of the mouse in this window.
 		//! 
-		//! \param [out,opt] x The x position of the mouse.
-		//! \param [out,opt] y The y position of the mouse.
+		//! \param [out] x The x position of the mouse. Optional.
+		//! \param [out] y The y position of the mouse. Optional.
 		virtual void GetAsyncMousePosition(int *const x, int *const y) = 0;
 
 		//! \brief Create a child window.
 		//! 
 		//! \param [in] width The width of the window.
 		//! \param [in] height The height of the window.
-		//! \param [in,opt] title The title of the window.
+		//! \param [in] title The title of the window. Optional.
 		//! 
 		//! \return The new window.
 		virtual Window *CreateChild(int width, int height, const char *title) = 0;
